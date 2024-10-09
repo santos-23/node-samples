@@ -6,15 +6,15 @@ console.log('root path ', ROOT_DIR);
 require('dotenv').config();
 const args = require('yargs').argv;
 
-console.log(args.kafka_topic)
 if(!args.kafka_topic){
     process.exit(0);
 }
 
-const KAFKA_TOPIC = args.kafka_topic ? args.kafka_topic : 'ON_PREM_SHARE_LOG';
-const isWorkerMinute = KAFKA_TOPIC === 'ON_PREM_WORKER_MINUTE';
-const isFoundBlock = KAFKA_TOPIC === 'ON_PREM_FOUND_BLOCK_SHA256_COIN';
-const isShareLog = KAFKA_TOPIC === 'ON_PREM_SHARE_LOG';
+const KAFKA_TOPIC = args.kafka_topic ? args.kafka_topic : 'SHARE_LOG';
+const isRawSha256CoinJob = KAFKA_TOPIC === 'RAW_SHA256_COIN_JOB_V1';
+const isStratumJob = KAFKA_TOPIC === 'STRATUM_JOB_V1';
+const isFoundBlock = KAFKA_TOPIC === 'FOUND_BLOCK_SHA256_COIN_V1';
+const isShareLog = KAFKA_TOPIC === 'SHARE_LOG';
 const KAFKA_BROKERS = process.env.KAFKA_BROKERS;
 const KAFKA_GROUP_ID = process.env.KAFKA_GROUP_ID;
 const KAFKA_PARTITION = Number(process.env.KAFKA_PARTITION);
@@ -23,9 +23,10 @@ const KAFKA_CONSUME_COUNT = Number(
         "KAFKA_CONSUME_COUNT" in process.env ? process.env.KAFKA_CONSUME_COUNT : 1
 );
 
-const protoPath = (isWorkerMinute || isShareLog) ? './proto/pool.proto' : './proto/pool_rpc.proto';
-const protoType = isWorkerMinute ? 'pool.WorkerMinute' :
-        isShareLog ? 'pool.Share' : 'pool.service.SubmitBlockSha256Coin'
+const protoPath = (isRawSha256CoinJob || isStratumJob || isFoundBlock) ? './proto/pool_rpc.proto' : './proto/pool.proto';
+const protoType = isRawSha256CoinJob ? 'pool.service.RawSha256CoinJob' :
+    isStratumJob ? 'pool.service.StratumJob' :
+        isFoundBlock ? 'pool.service.SubmitBlockSha256Coin' : 'pool.Share';
 
 const FILE_OFFSET = ROOT_DIR + `/${KAFKA_TOPIC}_offset.data`;
 let OFFSET = 0;
@@ -102,118 +103,37 @@ async function consumeCallback(err, messages) {
 }
 
 async function processMessage(data) {
-    console.log(data)
-    //fs.writeFileSync('/home/bsetec/Documents/sample_decode_package/ON_PREM_WORKER_MINUTE_sample.txt',data.value);
+    let logMsg = [];
+    logMsg.push('#' + data.offset + ' ');
+    logMsg.push('| enc ' + (data.size / 1024) + 'kb ');
     try {
+        const decodeStart = Date.now();
         // Load the protobuf definition
         const root = protobuf.loadSync(protoPath);
         const messageType = root.lookupType(protoType);
         let isErr = messageType.verify(data.value)
         if (isErr) {
-            console.error(' message decode error: ', isErr)
+            console.error(logMsg.join(''), ' message decode error: ', isErr)
             return false;
         }
         let decodedMessage = messageType.decode(data.value);
-        let decodedMessageJson = {};
-        decodedMessageJson = decodedMessage.toJSON();
-        let resObject;
-        if(isWorkerMinute){
-            resObject = workerMinuteToJson(decodedMessageJson)
-        }else if(isShareLog){
-            resObject = shareDataToJson(decodedMessageJson)
-        }else{
-            resObject = foundBlockToJson(decodedMessageJson)
+        const decodeDuration = Date.now() - decodeStart;
+        if (isStratumJob) {
+            decodedMessage = decodedMessage.sha256CoinJob
         }
-        console.log(resObject)
+        const decodedMessageJson = decodedMessage.toJSON();
+        // decodedMessageJson['offset'] = data.offset;  //not needed. its for testing purpose
+        // decodedMessageJson['topic'] = data.topic;  //not needed. its for testing purpose
+        const inputData = JSON.stringify(decodedMessageJson);
+        // logMsg.push('| response ' + JSON.stringify(response));
+        console.log(logMsg.join(''));
         await saveToFile(data.offset);
         return true;
     } catch (error) {
-        console.error(' messageError:', error);
+        console.error(logMsg.join(''), ' messageError:', error);
         await saveToFile(data.offset);
         return false;
     }
-}
-
-function workerMinuteToJson(decodedMessageJson){
-    let workerObject = {
-        userName : decodedMessageJson.userName ? decodedMessageJson.userName : '',
-        workerName : decodedMessageJson.workerName ? decodedMessageJson.workerName : '',
-        minute : decodedMessageJson.minute ? decodedMessageJson.minute : '',
-        shareAccept : decodedMessageJson.shareAccept ? decodedMessageJson.shareAccept : 0,
-        shareReject : decodedMessageJson.shareReject ? decodedMessageJson.shareReject : 0,
-        rejectRate : decodedMessageJson.rejectRate ? decodedMessageJson.rejectRate : 0,
-        createdAt : decodedMessageJson.createdAt ? decodedMessageJson.createdAt : '',
-    }
-    return workerObject;
-}
-
-function shareDataToJson(decodedMessageJson){
-    let shareObject = {
-        sserverId : decodedMessageJson.sserverId ? decodedMessageJson.sserverId : '',
-        userNameHash : decodedMessageJson.userNameHash ? decodedMessageJson.userNameHash : '',
-        workerId : decodedMessageJson.workerId ? decodedMessageJson.workerId : '',
-        jobBits : decodedMessageJson.jobBits ? decodedMessageJson.jobBits : 0,
-        blkBits : decodedMessageJson.blkBits ? decodedMessageJson.blkBits : 0,
-        blkHeight : decodedMessageJson.blkHeight ? decodedMessageJson.blkHeight : 0,
-        blkReward : decodedMessageJson.blkReward ? decodedMessageJson.blkReward : 0,
-        blk_fee : decodedMessageJson.blk_fee ? decodedMessageJson.blk_fee : 0,
-        ip : decodedMessageJson.ip ? decodedMessageJson.ip : 0,
-        ip2 : decodedMessageJson.ip2 ? decodedMessageJson.ip2 : 0,
-        result : decodedMessageJson.result ? decodedMessageJson.result : 0,
-        shareTime : decodedMessageJson.shareTime ? decodedMessageJson.shareTime : 0,
-        userName : decodedMessageJson.userName ? decodedMessageJson.userName : '',
-        workerName : decodedMessageJson.workerName ? decodedMessageJson.workerName : '',
-        minerAgent : decodedMessageJson.minerAgent ? decodedMessageJson.minerAgent : '',
-        uniqueId : decodedMessageJson.uniqueId ? decodedMessageJson.uniqueId : '',
-        extraNonce2 : decodedMessageJson.extraNonce2 ? decodedMessageJson.extraNonce2 : 0,
-        headerNonce : decodedMessageJson.headerNonce ? decodedMessageJson.headerNonce : 0,
-        serverJobId : decodedMessageJson.serverJobId ? decodedMessageJson.serverJobId : 0,
-        actualMiningCoin : decodedMessageJson.actualMiningCoin ? decodedMessageJson.actualMiningCoin : 0,
-        shareDifficulty : decodedMessageJson.shareDifficulty ? decodedMessageJson.shareDifficulty : 0,
-        blkVersion : decodedMessageJson.blkVersion ? decodedMessageJson.blkVersion : 0,
-        blkTime : decodedMessageJson.blkTime ? decodedMessageJson.blkTime : 0,
-        shareType : decodedMessageJson.shareType ? decodedMessageJson.shareType : 0,
-        blkHash : decodedMessageJson.blkHash ? decodedMessageJson.blkHash : '',
-        currentDiffIndex : decodedMessageJson.currentDiffIndex ? decodedMessageJson.currentDiffIndex : 0,
-        isStale : decodedMessageJson.isStale ? decodedMessageJson.isStale : false,
-        rejectType : decodedMessageJson.rejectType ? decodedMessageJson.rejectType : 0,
-    }
-    return shareObject;
-}
-
-function foundBlockToJson(decodedMessageJson){
-    let baseInformation;
-    let baseJson = decodedMessageJson.baseInformation ? decodedMessageJson.baseInformation : ''
-    if(baseJson){
-        baseInformation = {
-            componentId : baseJson.componentId ? baseJson.componentId : '',
-            createTimeNanosecond : baseJson.createTimeNanosecond ? baseJson.createTimeNanosecond : '',
-            sendTimeNanosecond : baseJson.sendTimeNanosecond ? baseJson.sendTimeNanosecond : '',
-        }
-    }
-    let foundBlockObject = {
-        baseInformation : baseInformation ? baseInformation : '',
-        coinId : decodedMessageJson.coinId ? decodedMessageJson.coinId : 0,
-        rawSha256CoinJobHash : decodedMessageJson.rawSha256CoinJobHash ? decodedMessageJson.rawSha256CoinJobHash : '',
-        height : decodedMessageJson.height ? decodedMessageJson.height : '',
-        reward : decodedMessageJson.reward ? decodedMessageJson.reward : '',
-        fee : decodedMessageJson.fee ? decodedMessageJson.fee : 0,
-        hash : decodedMessageJson.hash ? decodedMessageJson.hash : '',
-        previousHash : decodedMessageJson.previousHash ? decodedMessageJson.previousHash : '',
-        bits : decodedMessageJson.bits ? decodedMessageJson.bits : 0,
-        version : decodedMessageJson.version ? decodedMessageJson.version : 0,
-        nonce : decodedMessageJson.nonce ? decodedMessageJson.nonce : 0,
-        time : decodedMessageJson.time ? decodedMessageJson.time : 0,
-        merkleRootHash : decodedMessageJson.merkleRootHash ? decodedMessageJson.merkleRootHash : '',
-        coinbaseTransactionHex : decodedMessageJson.coinbaseTransactionHex ? decodedMessageJson.coinbaseTransactionHex : '',
-        headerHex : decodedMessageJson.headerHex ? decodedMessageJson.headerHex : '',
-        userName : decodedMessageJson.userName ? decodedMessageJson.userName : '',
-        workerName : decodedMessageJson.workerName ? decodedMessageJson.workerName : '',
-        userNameHash : decodedMessageJson.userNameHash ? decodedMessageJson.userNameHash : '',
-        workerId : decodedMessageJson.workerId ? decodedMessageJson.workerId : '',
-        depositAddress : decodedMessageJson.depositAddress ? decodedMessageJson.depositAddress : 0
-    }
-    return foundBlockObject;
 }
 
 function saveToFile(newOffset) {
@@ -230,7 +150,7 @@ function saveToFile(newOffset) {
                 console.error('An error has occurred ', error);
                 return;
             }
-            // console.log('Offset saved ', newOffset);
+            console.log('Offset saved ', newOffset);
             resolve(true)
         })
     })
