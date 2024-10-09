@@ -1,0 +1,370 @@
+swagger : "2.0"
+info :
+  title: Swagger API Docs
+  description : API Documentation
+  version : 1.0
+  contact :
+    email : example@gmail.com
+  liscence:
+    name : Apache 2.0
+    url : "http://apache.org/"
+  servers :
+  -url : "http://localhost:3000/"
+  description : Loacl server
+  -url : "http://company.com/"
+  description : Company server
+
+schemes : [http,https]
+
+paths :
+
+  #get user details
+  /api/getUser/:
+    get:
+      summary : Get all users
+      description : return all users
+      responses :
+        200:
+          description : Success
+          schema :
+            type : object
+
+        400:
+          description : User Error
+        500:
+          description : Server Error
+
+  #get order details
+  /api/getOrder/:
+    get:
+      summary : Get all order
+      description : this returns the all order
+      responses :
+        200:
+          description : Success
+          schema :
+            type: object
+            properties :
+              _id :
+                type: integer
+              item:
+                type: string
+              price:
+                type: integer
+              quantity:
+                type: integer
+        400:
+          description : User Error
+        500:
+          description : Server Error
+
+#get inventory details
+  /api/getInventory/:
+    get:
+      summary : Get all inventory details
+      description : this returns the all inventory details
+      responses :
+        200:
+          description : Success
+          schema :
+            type : object
+            properties :
+              _id :
+                type: integer
+              name:
+                type: string
+              description:
+                type: string
+              instock:
+                type: integer
+        400:
+          description : User Error
+        500:
+          description : Server Error
+
+  #create a user using post method
+  /api/createUser/:
+    post:
+      summary: create new user
+      description: this create a new user details
+      produces:
+        - application/json
+      consumes:
+        - application/json
+      parameters:
+        - in: body
+          name: User
+          schema:
+            type: object
+            properties:
+              stuname:
+                type : string
+              age :
+                type : integer
+              city :
+                type: string
+              standard :
+                type : integer
+              mark1 :
+                type : integer
+              mark2 :
+                type : integer
+              mark3 :
+                type : integer
+      responses:
+        200:
+          description: Success
+
+
+  #update the user using put method
+  /api/updateUser/{id}:
+    put:
+      summary: Update data in the example API
+      description: Update data in the example API using the PUT method.
+      # parameters:
+      #   - name : id
+      #     in : path
+      #     required : true
+      #     schema:
+      #       type: string
+      parameters:
+        - in: body
+          name: body
+          required: true
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    stuname:
+                      type : string
+                    age :
+                      type : integer
+                    city :
+                      type: string
+                    standard :
+                      type : integer
+                    mark1 :
+                      type : integer
+                    mark2 :
+                      type : integer
+                    mark3 :
+                      type : integer
+      responses:
+        '200':
+          description: Successful response after data update.
+        '400':
+          description: Bad Request. The request payload may be invalid.
+
+  #create a orders using post method
+  /api/createOrder/:
+    post:
+      summary: create new order
+      description: this create a new order details
+      produces:
+        - application/json
+      consumes:
+        - application/json
+      parameters:
+        - in: body
+          name: Order
+          schema:
+            type: object
+            properties:
+              _id :
+                type: integer
+              item:
+                type: string
+              price:
+                type: integer
+              quantity:
+                type: integer
+      responses:
+        200:
+          description: Success
+
+  #create a inventory using post method
+  /api/createInventory/:
+    post:
+      summary: create new inventory record
+      description: this create a new inventory details
+      produces:
+        - application/json
+      consumes:
+        - application/json
+      parameters:
+        - in: body
+          name: Inventory
+          schema:
+            type: object
+            properties:
+              _id :
+                type: integer
+              name:
+                type: string
+              description:
+                type: string
+              instock:
+                type: integer
+      responses:
+        200:
+          description: Success
+
+  #get users in array type
+  /users/:
+    get:
+      summary : Get array users
+      description : this returns the users in array
+      responses :
+        200:
+          description : Success
+          schema :
+            type : array
+            items :
+              type : object
+              properties :
+                id :
+                  type : integer
+                name :
+                  type : string
+        400:
+          description : User Error
+        500:
+          description : Server Error
+
+  #get single user details through params
+  /users/{userId}:
+    get:
+      summary : get single user details
+      description : this returns the single user details
+      parameters:
+        - name : userId
+          in : path
+          required : true
+          schema :
+            type : integer
+      responses :
+        200:
+          description : Success
+
+  # #create the new user using POST method
+  # /create:
+  #   post:
+  #     summary: Post the new data
+  #     description : this create a new user details
+  #     produces:
+  #       - application/json
+  #     consumes:
+  #       - application/json
+  #     parameters:
+  #       - in: body
+  #         name: User
+  #         schema:
+  #           type: object
+  #           properties:
+  #             id :
+  #               type : integer
+  #             name :
+  #               type : string
+  #     responses :
+  #       200:
+  #         description : Success
+
+  #create the new user using POST method
+  /create:
+    post:
+      summary: Post the new data
+      description : this create a new user details
+      produces:
+        - application/json
+      consumes:
+        - application/json
+      parameters:
+        - in: body
+          name: User
+          schema:
+            $ref: "#/components/schema/User"
+      responses :
+        200:
+          description : Success
+
+
+  /update:
+    put:
+      summary: Update data in the example API
+      security:
+        - OAuth2: [write]
+      parameters:
+        - in: body
+          name: User
+          schema:
+            $ref: "#/components/schema/User"
+      requestBody:
+        required: true
+        content:
+          application/json:
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Bad Request
+
+
+  #queries
+  /userqueries:
+    get:
+      summary: get from queries
+      parameters:
+        - in: query
+          name: id
+          type: integer
+          enum: [1,2,3]
+          # enum: ['male','female']
+      responses:
+        200:
+          description: Success
+
+
+  #fileUpload
+  /upload:
+    post:
+      summary: upload the files
+      consumes:
+        - multipart/form-data
+      parameters:
+        - in : formData
+          name: file
+          type: file
+          required: true
+          description: File upload
+        - in : formData
+          name: id
+          type: integer
+          required: true
+          description: ID of integer
+        - in : header
+          name: auth
+          schema:
+            type: string
+        - in : cookie
+          name: debug
+          schema:
+            type: string
+      responses:
+        200:
+          description: OK
+
+
+  
+
+components:
+  schema:
+    User:
+      type: object
+      properties:
+        id :
+          type : integer
+        name :
+          type : string
+
+

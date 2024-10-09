@@ -1,0 +1,265 @@
+syntax = "proto3";
+
+package pool.service;
+
+service JobServer {
+  rpc CheckHealth (RequestCheckHealth) returns (ReplyCheckHealth) {
+  }
+  rpc SubscribeStratumJob (RequestSubscribeJob) returns (stream StratumJob) {
+  }
+  rpc SubmitFoundBlockSha256Coin (SubmitBlockSha256Coin) returns (ReplySubmitBlock) {
+  }
+  rpc SubmitFoundBlockNamecoin (SubmitBlockNamecoin) returns (ReplySubmitBlock) {
+  }
+  rpc SubmitFoundBlockVcash (SubmitBlockVcash) returns (ReplySubmitBlock) {
+  }
+  rpc SubmitFoundBlockRsk (SubmitBlockRsk) returns (ReplySubmitBlock) {
+  }
+}
+
+service GlobalJobServer {
+  rpc CheckHealth (RequestCheckHealth) returns (ReplyCheckHealth) {
+  }
+  rpc NotifyNewSha256CoinBlock (Sha256CoinBlockHeader) returns (ReplyNotifySha256CoinBlock) {
+  }
+  // reply: global consistent job
+  rpc SubscribeGlobalRawSha256CoinJob (RequestSubscribeJob) returns (stream RawSha256CoinJob) {
+  }
+  rpc SubscribeNamecoinJob (RequestSubscribeJob) returns (stream NamecoinJob) {
+  }
+  rpc SubscribeVcashJob (RequestSubscribeJob) returns (stream VcashJob) {
+  }
+  rpc SubscribeRskJob (RequestSubscribeJob) returns (stream RskJob) {
+  }
+  rpc SubmitFoundBlockNamecoin (SubmitBlockNamecoin) returns (ReplySubmitBlock) {
+  }
+  rpc SubmitFoundBlockVcash (SubmitBlockVcash) returns (ReplySubmitBlock) {
+  }
+  rpc SubmitFoundBlockRsk (SubmitBlockRsk) returns (ReplySubmitBlock) {
+  }
+}
+
+service NewBlockMonitor {
+  rpc CheckHealth (RequestCheckHealth) returns (ReplyCheckHealth) {
+  }
+  rpc NotifyNewSha256CoinBlock (Sha256CoinBlockHeader) returns (ReplyNotifySha256CoinBlock) {
+  }
+  rpc SubscribeRawSha256CoinJob (RequestSubscribeJob) returns (stream RawSha256CoinJob) {
+  }
+}
+
+message BaseInformation {
+  string component_id = 1;
+  uint64 create_time_nanosecond = 2;
+  uint64 send_time_nanosecond = 3;
+}
+
+message RequestCheckHealth {
+  BaseInformation base_information = 1;
+}
+
+message ReplyCheckHealth {
+  BaseInformation base_information = 1;
+  bool health = 2;
+}
+
+message RequestSubscribeJob {
+  BaseInformation base_information = 1;
+  uint32 coin_id = 2;
+}
+
+message ReplySubmitBlock {
+  BaseInformation base_information = 1;
+}
+
+message ReplyNotifySha256CoinBlock {
+  BaseInformation base_information = 1;
+  bool success = 2;
+  string message = 3;
+}
+
+message StratumJob {
+  BaseInformation base_information = 1;
+  uint64 server_job_id = 2;
+  Sha256CoinJob sha256_coin_job = 3;
+  VcashJob vcash_job = 4;
+  NamecoinJob namecoin_job = 5;
+  RskJob rsk_job = 6;
+}
+
+//----------------------- sha256 coin ----------------------
+
+// sha256 coin: btc bch bsv
+// warning: the value used for priority compare
+enum JOB_SOURCE_TYPE {
+  JOB_SOURCE_TYPE_UNKNOWN = 0;
+  JOB_SOURCE_TYPE_POOL_STRATUM_SNIFFER = 1;
+  JOB_SOURCE_TYPE_PARTNER_POOL_NOTIFY = 2;
+  JOB_SOURCE_TYPE_P2P_SNIFFER = 3;
+  JOB_SOURCE_TYPE_POOL_SELF_MINED = 4;
+  JOB_SOURCE_TYPE_RPC_CALL = 5;
+  JOB_SOURCE_TYPE_GLOBAL_JOB_SERVER = 6;
+}
+
+// RawSha256CoinJob -> Sha256CoinJob -> StratumJob -> stratum server -> miner job
+message RawSha256CoinJob {
+  BaseInformation base_information = 1;
+  uint32 coin_id = 2;
+  JOB_SOURCE_TYPE job_source_type = 3;
+  string raw_sha256_coin_job_hash = 4;
+  string previous_hash = 5;
+  uint64 height = 6;
+  int64 reward = 7; // coinbase value = reward + fee
+  int64 fee = 8;
+  uint32 bits = 9;
+  int32 version = 10;
+  uint32 min_time = 11;
+  uint32 current_time = 12;
+  string witness_commitment = 13; // maybe empty
+  repeated string transaction_hex = 14; // without coinbase transaction
+  repeated string transaction_hash = 15;
+}
+
+message Sha256CoinJob {
+  BaseInformation base_information = 1;
+  uint32 coin_id = 2;
+  JOB_SOURCE_TYPE job_source_type = 3;
+  string raw_sha256_coin_job_hash = 4;
+  string previous_hash = 5;
+  string previous_hash_little_endian = 6;
+  uint64 height = 7;
+  int64 reward = 8; // coinbase value = reward + fee
+  int64 fee = 9;
+  uint32 bits = 10;
+  int32 version = 11;
+  uint32 min_time = 12;
+  uint32 current_time = 13;
+  string coinbase1 = 14;
+  string coinbase2 = 15;
+  repeated string merkle_branches = 16;
+  string witness_commitment = 17; // maybe empty
+  string deposit_address = 18;
+}
+
+message SubmitBlockSha256Coin {
+  BaseInformation base_information = 1;
+  uint32 coin_id = 2;
+  string raw_sha256_coin_job_hash = 3;
+  uint64 height = 4;
+  int64 reward = 5; // coinbase value = reward + fee
+  int64 fee = 6;
+  string hash = 7;
+  string previous_hash = 8;
+  uint32 bits = 9;
+  int32 version = 10;
+  uint32 nonce = 11;
+  uint32 time = 12;
+  string merkle_root_hash = 13;
+  string coinbase_transaction_hex = 14;
+  string header_hex = 15; // header hex string
+  string user_name = 16; // user_name.worker_name
+  string worker_name = 17;
+  string user_name_hash = 18;
+  int64 worker_id = 19; // hash(work_name)
+  string deposit_address = 20;
+}
+
+message Sha256CoinBlockHeader {
+  BaseInformation base_information = 1;
+  uint32 coin_id = 2;
+  JOB_SOURCE_TYPE job_source_type = 3;
+  string hash = 4;
+  string previous_hash = 5;
+  int32 version = 6;
+  uint32 nonce = 7;
+  string merkle_root_hash = 8;
+  uint32 time = 9;
+  uint32 bits = 10;
+  uint32 next_bits = 11;
+  uint64 height = 12;
+}
+
+//----------------------- namecoin ----------------------
+
+message MergeMining {
+    string coin_id = 1;
+    uint64 height = 2;
+    string current_hash = 3;
+    string previous_hash = 4;
+    uint32 bits = 5;
+    uint64 coinbase_value = 6;
+}
+
+message NamecoinJob {
+  BaseInformation base_information = 1;
+  map<string, bytes> merge_mining = 2;
+}
+
+message SubmitBlockNamecoin {
+  BaseInformation base_information = 1;
+  // sha256 coin
+  string sha256_coin_header_hex = 2;
+  string sha256_coin_block_hash = 3;
+  string sha256_coin_coinbase_hex = 4;
+  string sha256_coin_merkle_branch = 5;
+  string coin_id = 6;
+  string merge_mine_block_hash = 7;
+  uint64 merge_mine_height = 8;
+  uint64 merge_mine_coinbase_value = 9;
+}
+
+//----------------------- vcash ----------------------
+
+message VcashJob {
+  BaseInformation base_information = 1;
+  uint64 height = 2;
+  string current_hash = 3;
+  string previous_hash = 4;
+  uint32 bits = 5;
+  uint64 base_rewards = 6; // coinbase value = base_rewards + transactions_fee
+  uint64 transactions_fee = 7;
+}
+
+message SubmitBlockVcash {
+  BaseInformation base_information = 1;
+
+  // sha256 coin
+  string sha256_coin_header_hex = 2;
+  string sha256_coin_block_hash = 3;
+  string sha256_coin_coinbase_hex = 4;
+  string sha256_coin_merkle_branch = 5;
+
+  // vcash
+  string vcash_header_hash = 6;
+  uint64 vcash_base_rewards = 7;
+  uint64 vcash_transactions_fee = 8;
+  uint64 vcash_height = 9;
+  string vcash_previous_hash = 10;
+}
+
+//----------------------- RSK ----------------------
+
+message RskJob {
+  BaseInformation base_information = 1;
+  string hash = 2;
+  string target = 3;
+  string fees = 4; // A.K.A block reward
+  bool notify = 5;
+  string previous_hash = 6;
+}
+
+message SubmitBlockRsk {
+  BaseInformation base_information = 1;
+  // sha256 coin
+  string sha256_coin_header_hex = 2;
+  string sha256_coin_block_hash = 3;
+  string sha256_coin_coinbase_hex = 4;
+  // sha256 coin merkle hashes(formatted into a space separated string)
+  // The coinbase's hash must be present in the collection in the first position
+  string sha256_coin_merkle_branch = 5;
+  // Length of merkle hashes collection
+  uint32 sha256_coin_merkle_branch_count = 6;
+  // rsk
+  string rsk_block_hash = 7;
+  uint64 rsk_fees = 8;
+}

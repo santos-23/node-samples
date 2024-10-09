@@ -1,0 +1,121 @@
+syntax = "proto3";
+
+package pool;
+
+message Share {
+  enum Result {
+    REJECT = 0;
+    ACCEPT = 1;
+  }
+  enum Type {
+    NORMAL = 0;
+    MAYBE_HISTORY = 1;
+  }
+  enum Reject_Type {
+    DEFAULT = 0;
+    JOB_NOT_FOUND = 1;
+    TIME_TOO_OLD = 2;
+    TIME_TOO_NEW = 3;
+    DUPLICATE_SHARE = 4;
+    LOW_DIFF_HASH = 5;
+    TARGET_BY_INDEX = 6;
+  }
+  uint64 server_job_id = 1;
+  string user_name_hash = 2;
+  int64  worker_id = 3;  // hash(work_name), hash algo: dsha256, crc64
+  uint32 job_bits = 4;  // job   difficulty
+  uint32 blk_bits = 5;  // block difficulty
+  uint64 blk_height = 6;
+  int64  blk_reward = 7;  // block reward without fee
+  int64  blk_fee = 8;  // block tx's fee
+  uint32 ip = 9;  // wan ip
+  uint32 ip2 = 10; // lan ip
+  int32  result = 11; // accept, reject or something else
+  uint32 share_time = 12;
+
+  // user_name.<worker_name>
+  string user_name = 14;
+  string worker_name = 15;
+  string miner_agent = 16; // miner's user-agent, cgminer-xxx-xxx
+  uint64 unique_id = 17;
+  uint64 extra_nonce_2 = 18;
+  uint32 header_nonce = 19;
+  string sserver_id = 20;
+
+  uint32 actual_mining_coin = 21;
+  uint64 share_difficulty = 22;
+
+  // used for recover block header
+  uint32 blk_version = 23;
+  uint32 blk_time = 24;
+  Type share_type = 25;
+  string blk_hash = 27;
+  uint32 current_diff_index = 28;
+  bool is_stale = 29;
+  Reject_Type reject_type = 30;
+}
+
+message PerformanceMessage {
+  int32 type = 1;
+  string message_key = 2;
+  int64 time_point_or_interval = 3;
+  string second_message_key = 4;
+}
+
+message WorkerInfo {
+  string user_name_hash = 1;
+  int64 worker_id = 2;
+  uint32 ping_latency = 3; // millisecond
+  // others, like FAN SPEED
+  // TODO add ip sserver_id
+}
+
+message WorkerMinute {
+  string user_name = 1;
+  string worker_name = 2;
+  uint64 minute = 3;
+  double share_accept = 4;
+  double share_reject = 5;
+  double reject_rate = 6;
+  string created_at = 7;
+}
+
+//----------------------- Gateway ----------------------
+
+enum GATEWAY_MESSAGE_TYPE {
+  GATEWAY_MESSAGE_TYPE_UNKNOWN = 0;
+  POOL_CONTROL_CLOSE_MINER_CONNECTION = 1;
+  POOL_CONTROL_CLOSE_POOL_CONNECTION = 2;
+  MINER_CONTROL_REUSE_DIFFICULTY = 3;
+  POOL_MESSAGE_NORMAL = 10;
+  POOL_MESSAGE_RECONNECT = 11;
+  POOL_MESSAGE_RESPONSE_ERROR = 12;
+  POOL_MESSAGE_RESPONSE_AUTHORIZE = 13;
+  POOL_MESSAGE_RESPONSE_AUTHORIZE_ERROR = 14;
+  POOL_MESSAGE_RESPONSE_VALID_SHARE = 15;
+  POOL_MESSAGE_RESPONSE_INVALID_SHARE = 16;
+  POOL_MESSAGE_SEND_JOB = 17;
+  POOL_MESSAGE_SET_DIFFICULTY = 18;
+  MINER_MESSAGE_NORMAL = 20;
+}
+
+message GatewayMessage {
+  GATEWAY_MESSAGE_TYPE message_type = 1;
+  bytes message = 2;
+}
+
+//----------------------- PoolService ----------------------
+
+enum POOL_SERVICE_MESSAGE_TYPE {
+  POOL_SERVICE_MESSAGE_TYPE_UNKNOWN = 0;    // Illegal
+  LOGIN = 1;                                // Client -> Server, message: component_id
+  PING_PONG = 2;                            // Client -> Server, message: nano time
+  SERVICE_SHUTDOWN = 3;                     // Client <- Server
+  SEND_JOB = 4;                             // Client <- Server, message: mining notify pb
+  SUBMIT_BLOCK = 5;                         // Client -> Server, message: found block pb
+}
+
+message PoolServiceMessage {
+  POOL_SERVICE_MESSAGE_TYPE message_type = 1;
+  bytes message = 2;
+}
