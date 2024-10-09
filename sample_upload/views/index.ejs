@@ -1,0 +1,48 @@
+<!-- views/index.ejs -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>File Upload in DataTable</title>
+    <!-- Add DataTables CSS and JS -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.0/css/jquery.dataTables.min.css">
+</head>
+<body>
+    <h1>File Upload in DataTable</h1>
+    <form action="upload" method="post" id="dataForm" enctype="multipart/form-data">
+        <label for="name">Name:</label>
+        <input type="text" id="name" name="name" required>
+
+        <label for="age">Age:</label>
+        <input type="number" id="age" name="age" required>
+
+        <label for="city">City:</label>
+        <input type="text" id="city" name="city" required>
+
+        <label for="file">File:</label>
+        <input type="file" id="file" name="file" required>
+
+        <button type="submit">Add to DataTable</button>
+    </form>
+
+    <table id="fileTable">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Age</th>
+                <th>City</th>
+                <th>File Name</th>
+                <th>Download Link</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- DataTable rows will be added dynamically using JavaScript -->
+        </tbody>
+    </table>
+
+    <!-- Add jQuery and DataTables JS -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.0/js/jquery.dataTables.min.js"></script>
+    <!-- Include your custom JavaScript -->
+    <script src="script.js"></script>
+</body>
+</html>

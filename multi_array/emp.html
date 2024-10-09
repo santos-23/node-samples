@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Datatable</title>
+    <!-- stylesheet cdn link -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.5/css/jquery.dataTables.css" />
+    <!-- bootstrap cdn link -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
+    <style>
+        #forms{
+            display: grid;
+            align-items: center;
+            text-align: center;
+        }
+        input{
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <!-- <div id="forms" style="margin: 20px;">
+        <form id="uploadForm" enctype="multipart/form-data">
+            <label for="empid">EmpID: </label>
+            <input type="number" name="empid" id="empid">
+    
+            <input type="file" name="imageFile" id="imageFile" accept="image/*"><br>
+    
+            <label for="empName">EmpName: </label>
+            <input type="text" name="empName" id="empName">
+    
+            <label for="age">Age: </label>
+            <input type="number" name="age" id="age"><br>
+    
+            <label for="position">Position: </label>
+            <input type="text" name="position" id="position">
+    
+            <label for="phone">Phone: </label>
+            <input type="number" name="phone" id="phone"><br>
+    
+            <label for="skills">Skills: </label>
+            <input type="text" name="skills" id="skills">
+    
+            <label for="qualification">Qualification: </label>
+            <input type="text" name="qualification" id="qualification"><br>
+    
+            <label for="city">City: </label>
+            <input type="text" name="city" id="city"><br>
+    
+            <label for="state">State: </label>
+            <input type="text" name="state" id="state"><br>
+
+            <input type="submit" value="Update datatable">
+        </form>
+    </div> -->
+    
+    <div style="margin: 20px;">
+        <table id="empData" border="1">
+            <thead>
+                <tr>
+                    <td>empId</td>
+                    <!-- <td>profile</td> -->
+                    <td>empName</td>
+                    <td>age</td>
+                    <td>position</td>
+                    <td>phone</td>
+                    <td>skills</td>
+                    <td>joiningDate</td>
+                    <td>qualification</td>
+                    <td>address</td>
+                    <td>city</td>
+                    <td>state</td>
+                </tr>
+            </thead>
+            <tbody>
+
+            </tbody>
+        </table>
+    </div>
+    <!-- jquery cdn link -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.0/jquery.min.js"></script>
+    <!-- datatables js link -->
+    <script src="https://cdn.datatables.net/1.13.5/js/jquery.dataTables.js"></script>
+    <!-- <script>
+        function getImageUrl(filename) {
+            return '/uploads/' + filename;
+        }
+        $(document).ready(function(){
+            const dataTable = $('#imageTable').DataTable({
+                columns: [
+                { data: 'empid' },
+                    {
+                        data: 'imageName', // Use the 'imageName' field from the server response
+                        render: function(data, type, row) {
+                            return '<img src="' + getImageUrl(data) + '" alt="' + row.name + '">';
+                        }
+                    },
+                    { data: 'empName' },
+                    { data: 'age' },
+                    { data: 'position' },
+                    { data: 'phone' },
+                    { data: 'skills' },
+                    { data: 'joiningDate' },
+                    { data: 'qualification' },
+                    { data: 'address' },
+                    { data: 'city' },
+                    { data: 'state' },
+                ],
+            })
+
+            $('#uploadForm').on('submit', function(event) {
+                event.preventDefault();
+
+                const formData = new FormData();
+                const empID = $('#empid').val();
+                const imageFile = $('#imageFile')[1].files[1];
+                const empName = $('#empName').val();
+                const age = $('#age').val();
+                const position = $('#position').val();
+                const phone = $('#phone').val();
+                const skills = $('#skills').val();
+                const qualification = $('#qualification').val();
+                const address = $('#address').val();
+                const city = $('#city').val();
+                const state = $('#state').val();
+
+                if (!imageFile || !empName) {
+                    alert('Please select an image and enter a name to upload.');
+                    return;
+                }
+
+                formData.append('empId', empID);
+                formData.append('profile', imageFile);
+                formData.append('empName', empName);
+                formData.append('position', position);
+                formData.append('phone', phone);
+                formData.append('skills', skills);
+                formData.append('qualification', qualification);
+                formData.append('address', address);
+                formData.append('city', city);
+                formData.append('state', state);
+                
+
+                $.ajax({
+                    url: '/emp',
+                    type: 'POST',
+                    data: formData,
+                    contentType: false,
+                    processData: false,
+                    success: function(data) {
+                        console.log(data);
+                        fetchImageData();
+                    },
+                    error: function(error) {
+                        console.error('Error uploading image:', error);
+                    }
+                });
+            });
+            function fetchImageData() {
+                $.ajax({
+                    url: '/emp',
+                    type: 'GET',
+                    success: function(data) {
+                        dataTable.clear();
+                        dataTable.rows.add(data);
+                        dataTable.draw();
+                    },
+                    error: function(error) {
+                        console.error('Error fetching image data:', error);
+                    }
+                });
+            }
+        });
+    </script> -->
+
+    <script>
+        $(document).ready(function(){
+            $.ajax({
+                url:'/emp',
+                type:'GET',
+                dataType:'json',
+                success:function(response){
+                    const datatable = $('#empData').DataTable({
+                        "paging":false,
+                        "pageLength": 3,
+                        // "scrollX":"500px",
+                        data:response,
+                        columns:[
+                            {data:"empID"},
+                            {data:"empName"},
+                            {data:"age"},
+                            {data:"position"},
+                            {data:"phone"},
+                            {data:"skills"},
+                            {data:"joiningDate"},
+                            {data:"qualification"},
+                            {data:"address"},
+                            {data:"city"},
+                            {data:"state"},
+                            // {"employees":"empID"},
+                            // {"employees":"empName"},
+                            // {"employees":"age"},
+                            // {"employees":"position"},
+                            // {"employees":"phone"},
+                            // {"employees":"skills"},
+                            // {"employees":"joiningDate"},
+                        ]
+                    })
+                },
+                error:function(err){
+                    console.log("error: ",err)
+                }
+            })
+        })
+    </script>
+</body>
+</html>

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Image Datatable with Ajax</title>
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.3/css/jquery.dataTables.min.css">
+</head>
+<body>
+    <form id="dataForm">
+        <label for="name">Name:</label>
+        <input type="text" id="name" name="name" required><br>
+        <label for="image">Select an image:</label>
+        <input type="file" id="image" name="image"><br>
+        <button type="submit">Save Data</button>
+    </form>
+
+    <table id="imageDatatable" class="display" style="width:100%">
+        <thead>
+            <tr>
+                <th>Image</th>
+                <th>Name</th>
+                <!-- Add more columns as needed -->
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.3/js/jquery.dataTables.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // Fetch data from the server using AJAX
+            $.ajax({
+                url: '/api/data', // Endpoint defined in app.js
+                type: 'GET',
+                dataType: 'json',
+                success: function(data) {
+                    // Call the function to populate the datatable with the received data
+                    populateDataTable(data);
+                },
+                error: function() {
+                    // Handle error if the AJAX request fails
+                    console.error('Failed to fetch data.');
+                }
+            });
+
+            // Submit the form using AJAX when the "Save Data" button is clicked
+            $('#dataForm').submit(function(event) {
+                event.preventDefault();
+                const name = $('#name').val();
+                const image_url = $('#image_url').val();
+                $.ajax({
+                    url: '/api/data', // Endpoint to save data defined in app.js
+                    type: 'POST',
+                    dataType: 'json',
+                    data: { name: name, image_url: image_url },
+                    success: function(response) {
+                        console.log('Data saved successfully:', response.message);
+                        // Refresh the datatable to include the newly saved data
+                        $('#imageDatatable').DataTable().ajax.reload();
+                    },
+                    error: function() {
+                        console.error('Failed to save data.');
+                    }
+                });
+            });
+        });
+
+        function populateDataTable(data) {
+            var table = $('#imageDatatable').DataTable({
+                // DataTable configuration options go here
+                // For example, you can set the page length, ordering, etc.
+                pageLength: 10,
+                order: [[1, 'asc']], // Sort by the second column (name) in ascending order
+                // Add more options as needed
+
+                // Populate the datatable with the received data
+                data: data,
+                columns: [
+                    {
+                        // Column to display the image
+                        data: null,
+                        render: function(data, type, row) {
+                            return '<img src="' + data.image_url + '" alt="' + data.name + '" width="50" height="50">';
+                        }
+                    },
+                    {
+                        // Column to display the name
+                        data: 'name'
+                    },
+                    // Add more columns as needed
+                ]
+            });
+        }
+    </script>
+</body>
+</html>

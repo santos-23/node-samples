@@ -1,0 +1,223 @@
+<!-- <!DOCTYPE html>
+<html>
+<head>
+  <title>Image Upload with jQuery DataTables</title>
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css">
+  <style>
+    table {
+      width: 100%;
+    }
+    img {
+      max-width: 100px;
+      max-height: 100px;
+    }
+  </style>
+</head>
+<body>
+  <h2>Image Upload</h2>
+  <form id="uploadForm" enctype="multipart/form-data">
+    <input type="file" name="imageFile" id="imageFile" accept="image/*">
+    <input type="submit" value="Upload Image">
+  </form>
+
+  <table id="imageTable">
+    <thead>
+      <tr>
+        <th>Image</th>
+        <th>Image Name</th>
+      </tr>
+    </thead>
+    <tbody>
+      
+    </tbody>
+  </table>
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+  <script>
+    $(document).ready(function() {
+      // Initialize DataTable
+      const dataTable = $('#imageTable').DataTable({
+        columns: [
+          { data: 'imageUrl', render: function(data, type, row) {
+            return '<img src="' + data + '" alt="' + row.name + '">';
+          }},
+          { data: 'name' }
+        ]
+      });
+
+      // Handle image upload
+      $('#uploadForm').on('submit', function(event) {
+        event.preventDefault();
+
+        const formData = new FormData();
+        const imageFile = $('#imageFile')[0].files[0];
+
+        if (!imageFile) {
+          alert('Please select an image to upload.');
+          return;
+        }
+
+        formData.append('image', imageFile);
+
+        $.ajax({
+          url: '/api/upload', // Replace with the actual server endpoint for image upload.
+          type: 'POST',
+          data: formData,
+          contentType: false,
+          processData: false,
+          success: function(data) {
+            // Handle the response from the server (if needed)
+            console.log(data);
+            // After the image is uploaded, update the DataTable
+            fetchImageData();
+          },
+          error: function(error) {
+            console.error('Error uploading image:', error);
+          }
+        });
+      });
+
+      // Function to fetch image data and update DataTable
+      function fetchImageData() {
+        $.ajax({
+          url: '/api/images', // Replace with the actual server endpoint for fetching image data.
+          type: 'GET',
+          success: function(data) {
+            // Clear existing rows
+            dataTable.clear();
+
+            // Add new rows
+            dataTable.rows.add(data);
+
+            // Redraw the DataTable
+            dataTable.draw();
+          },
+          error: function(error) {
+            console.error('Error fetching image data:', error);
+          }
+        });
+      }
+
+      // Fetch initial data on page load
+      fetchImageData();
+    });
+  </script>
+</body>
+</html> -->
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Image Upload with jQuery DataTables</title>
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css">
+  <style>
+    table {
+      width: 100%;
+    }
+    img {
+      max-width: 100px;
+      max-height: 100px;
+    }
+  </style>
+</head>
+<body>
+  <h2>Image Upload</h2>
+  <form id="uploadForm" enctype="multipart/form-data">
+    <input type="file" name="imageFile" id="imageFile" accept="image/*">
+    <label for="name">Image Name:</label>
+    <input type="text" name="name" id="name">
+    <label for="description">Description:</label>
+    <textarea name="description" id="description"></textarea>
+    <input type="submit" value="Upload Image">
+  </form>
+
+  <table id="imageTable">
+    <thead>
+      <tr>
+        <th>Image</th>
+        <th>Image Name</th>
+        <th>Description</th>
+        <th>Uploaded At</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Images will be displayed here dynamically -->
+    </tbody>
+  </table>
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+  <script>
+    function getImageUrl(filename) {
+      return 'http://localhost:3000/uploads/' + filename;
+    }
+    $(document).ready(function() {
+      const dataTable = $('#imageTable').DataTable({
+        columns: [
+        { 
+          data: 'imageName', // Use the 'imageName' field from the server response
+          render: function(data, type, row) {
+            return '<img src="' + getImageUrl(data) + '" alt="' + row.name + '">';
+            console.log(getImageUrl(data))
+          }
+        },
+        { data: 'name' },
+        { data: 'description' },
+        { data: 'uploadedAt' }
+      ]
+      });
+
+      $('#uploadForm').on('submit', function(event) {
+        event.preventDefault();
+
+        const formData = new FormData();
+        const imageFile = $('#imageFile')[0].files[0];
+        const name = $('#name').val();
+        const description = $('#description').val();
+
+        if (!imageFile || !name) {
+          alert('Please select an image and enter a name to upload.');
+          return;
+        }
+
+        formData.append('image', imageFile);
+        formData.append('name', name);
+        formData.append('description', description);
+
+        $.ajax({
+          url: '/api/upload',
+          type: 'POST',
+          data: formData,
+          contentType: false,
+          processData: false,
+          success: function(data) {
+            console.log(data);
+            fetchImageData();
+          },
+          error: function(error) {
+            console.error('Error uploading image:', error);
+          }
+        });
+      });
+
+      function fetchImageData() {
+        $.ajax({
+          url: '/api/images',
+          type: 'GET',
+          success: function(data) {
+            dataTable.clear();
+            dataTable.rows.add(data);
+            dataTable.draw();
+          },
+          error: function(error) {
+            console.error('Error fetching image data:', error);
+          }
+        });
+      }
+
+      fetchImageData();
+    });
+  </script>
+</body>
+</html>
