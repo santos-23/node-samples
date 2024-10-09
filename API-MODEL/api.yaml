@@ -1,0 +1,257 @@
+swagger : "2.0"
+info :
+  title: Swagger API Docs
+  description : API Documentation
+  version : 1.0
+  contact :
+    email : example@gmail.com
+  liscence:
+    name : Apache 2.0
+    url : "http://apache.org/"
+  servers :
+  -url : "http://localhost:3000/"
+  description : Loacl server
+  -url : "http://company.com/"
+  description : Company server
+
+schemes : [http,https]
+
+securityDefinitions:
+  bearerAuth:
+    type: apiKey
+    name: authorization
+    in: header
+    description: Bearer token for authentication
+
+security:
+  - bearerAuth: []
+
+paths :
+  
+  #register the admin
+  /api/admin/register:
+    post:
+      summary : register the admin
+      description : This register a new admin in this API
+      parameters:
+        - in : body
+          name: admin
+          schema:
+            type: object
+            properties:
+              adminName:
+                type: string
+              role:
+                type: string
+              email:
+                type: string
+              password:
+                type: string
+      responses :
+        200:
+          description : Success
+
+  #login the admin
+  /api/admin/login:
+    post:
+      summary : login the admin
+      description : This login a new admin in this API
+      parameters:
+        - in : body
+          name: admin
+          schema:
+            type: object
+            properties:
+              email:
+                type: string
+              password:
+                type: string
+      responses :
+        200:
+          description : Success
+
+
+  #register the user
+  /api/users/register:
+    post:
+      summary : create a user
+      description : This create a new user in this API
+      parameters:
+        - in : body
+          name: user
+          schema:
+            type: object
+            properties:
+              username:
+                type: string
+              email:
+                type: string
+              password:
+                type: string
+              role:
+                type: string
+              phone:
+                type: string
+      responses :
+        200:
+          description : Success
+
+
+  #login the user
+  /api/users/login:
+    post:
+      summary : login the user
+      description : This login a new user in this API
+      parameters:
+        - in : body
+          name: user
+          schema:
+            type: object
+            properties:
+              email:
+                type: string
+              password:
+                type: string
+      responses :
+        200:
+          description : Success
+
+
+  #get the products from the database
+  /api/products/:
+    get:
+      summary: get products
+      description: get all the products from the API
+      responses:
+        200:
+          description: Success
+          schema:
+            type: object
+            properties:
+              prod_id:
+                type: integer
+              product_name:
+                type: string
+              producedBy:
+                type: string
+              available:
+                type: string
+              description:
+                type: string
+              rating:
+                type: integer
+        400:
+          description: User Error
+        500:
+          description: Server Error
+
+    post:
+      summary: create a product
+      description: This create a new product
+      parameters:
+        - in : body
+          name: products
+          schema:
+            type: object
+            properties:
+              prod_id:
+                type: integer
+              product_name:
+                type: string
+              producedBy:
+                type: string
+              available:
+                type: string
+              description:
+                type: string
+              rating:
+                type: integer
+      responses:
+        200:
+          description : Success
+
+
+  #update a product
+  /api/products/{id}:
+    put:
+      summary: update a product
+      description: Update data in the product API
+      parameters:
+        - name : id
+          in : path
+          required : true
+          schema :
+            prod_id:
+              type: integer
+            product_name:
+              type: string
+            producedBy:
+              type: string
+            available:
+              type: string
+            description:
+              type: string
+            rating:
+              type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                prod_id:
+                  type: integer
+                product_name:
+                  type: string
+                producedBy:
+                  type: string
+                available:
+                  type: string
+                description:
+                  type: string
+                rating:
+                  type: integer
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Bad Request
+
+    delete:
+      summary: delete the product
+      description: This deletes the products from DB
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: id is required
+          schema:
+            type: integer
+      responses:
+        200:
+          description: product deleted
+
+    get:
+      summary: get one product
+      description: This give the spcified product
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: okk
+
+  # components:
+  # securitySchemes:
+  #   OAuth2:
+  #     type: oauth2
+  #     flows:
+  #       implicit:
+  #         authorizationUrl: https://example.com/oauth2/authorize
+  #         scopes:
+  #           read: Read access to the API
+  #           write: Write access to the API
